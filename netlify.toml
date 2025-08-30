@@ -1,9 +1,10 @@
 [build]
-  command = "npm run build"
+  command = "npm install && npm run build:client"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "18"
+  NODE_ENV = "production"
 
 [[redirects]]
   from = "/*"

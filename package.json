@@ -5,12 +5,18 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
-    "build": "vite build",
-    "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "cross-env NODE_ENV=production node dist/index.js",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "vite build",
+    "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist/server",
+    "start": "cross-env NODE_ENV=production node dist/server/index.js",
     "preview": "vite preview",
     "check": "tsc",
-    "seed": "tsx scripts/seed-data.ts"
+    "seed": "tsx scripts/seed-data.ts",
+    "mobile:add": "npx cap add android",
+    "mobile:build": "npm run build:client && npx cap sync",
+    "mobile:open": "npx cap open android",
+    "mobile:run": "npx cap run android",
+    "mobile:build-apk": "npm run mobile:build && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
