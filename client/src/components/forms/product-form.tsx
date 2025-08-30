@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/queryClient";
 import { z } from "zod";
 import { UNITS } from "@/lib/constants";
 
@@ -50,7 +50,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
   const createMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      await apiRequest("POST", "/api/products", data);
+      await apiClient.post("/api/products", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -72,7 +72,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      await apiRequest("PUT", `/api/products/${product.id}`, data);
+      await apiClient.put(`/api/products/${product.id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });

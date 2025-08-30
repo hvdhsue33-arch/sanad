@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, Search, User, Shield } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getRoleDisplayName, formatDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/queryClient";
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");

@@ -1,41 +1,72 @@
-export const CURRENCIES = [
-  { value: 'SYP', label: 'ليرة سورية', symbol: 'ل.س' },
-  { value: 'TRY', label: 'ليرة تركية', symbol: '₺' },
-  { value: 'USD', label: 'دولار أمريكي', symbol: '$' }
-];
+export const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://your-backend-url.netlify.app/api' 
+  : 'http://localhost:3000/api';
 
-export const TRANSACTION_TYPES = [
-  { value: 'sale', label: 'بيع' },
-  { value: 'service', label: 'خدمة' },
-  { value: 'advance_payment', label: 'دفعة مسبقة' },
-  { value: 'other', label: 'أخرى' }
-];
+export const APP_NAME = "نظام إبراهيم للمحاسبة";
+export const APP_VERSION = "1.0.0";
 
-export const EXPENSE_TYPES = [
-  { value: 'rent', label: 'إيجار' },
-  { value: 'salaries', label: 'رواتب' },
-  { value: 'services', label: 'خدمات' },
-  { value: 'purchase', label: 'مشتريات' },
-  { value: 'utilities', label: 'فواتير' },
-  { value: 'maintenance', label: 'صيانة' },
-  { value: 'other', label: 'أخرى' }
-];
+// API Endpoints
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: '/auth/login',
+    LOGOUT: '/auth/logout',
+    USER: '/auth/user',
+  },
+  DASHBOARD: {
+    STATS: '/dashboard/stats',
+    RECENT_TRANSACTIONS: '/dashboard/recent-transactions',
+    CURRENCY_DISTRIBUTION: '/dashboard/currency-distribution',
+    MONTHLY_REVENUE: '/dashboard/monthly-revenue',
+  },
+  REVENUES: '/revenues',
+  EXPENSES: '/expenses',
+  PRODUCTS: '/products',
+  NOTIFICATIONS: '/notifications',
+  USERS: '/users',
+  TENANTS: '/tenants',
+} as const;
 
-export const PAYMENT_METHODS = [
-  { value: 'cash', label: 'نقداً' },
-  { value: 'card', label: 'بطاقة' },
-  { value: 'transfer', label: 'حوالة' },
-  { value: 'other', label: 'أخرى' }
-];
+// User Roles
+export const USER_ROLES = {
+  SUPER_ADMIN: 'super_admin',
+  OWNER: 'owner',
+  MANAGER: 'manager',
+  ACCOUNTANT: 'accountant',
+  WAREHOUSE_KEEPER: 'warehouse_keeper',
+  VIEWER: 'viewer',
+} as const;
 
-export const USER_ROLES = [
-  { value: 'super_admin', label: 'مالك النظام' },
-  { value: 'owner', label: 'مالك المتجر' },
-  { value: 'manager', label: 'مدير فرعي' },
-  { value: 'accountant', label: 'محاسب' },
-  { value: 'warehouse_keeper', label: 'أمين مستودع' },
-  { value: 'viewer', label: 'قارئ' }
-];
+// Currencies
+export const CURRENCIES = {
+  SYP: 'SYP',
+  TRY: 'TRY',
+  USD: 'USD',
+} as const;
+
+// Transaction Types
+export const TRANSACTION_TYPES = {
+  SALE: 'sale',
+  SERVICE: 'service',
+  ADVANCE_PAYMENT: 'advance_payment',
+  OTHER: 'other',
+} as const;
+
+// Payment Methods
+export const PAYMENT_METHODS = {
+  CASH: 'cash',
+  CARD: 'card',
+  TRANSFER: 'transfer',
+  OTHER: 'other',
+} as const;
+
+// Expense Types
+export const EXPENSE_TYPES = {
+  RENT: 'rent',
+  SALARIES: 'salaries',
+  SERVICES: 'services',
+  PRODUCT_PURCHASE: 'product_purchase',
+  OTHER: 'other',
+} as const;
 
 export const UNITS = [
   { value: 'piece', label: 'قطعة' },

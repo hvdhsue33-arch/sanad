@@ -1,0 +1,694 @@
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إبراهيم للمحاسبة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                    chart: {
+                        "1": "var(--chart-1)",
+                        "2": "var(--chart-2)",
+                        "3": "var(--chart-3)",
+                        "4": "var(--chart-4)",
+                        "5": "var(--chart-5)",
+                    }
+                },
+                fontFamily: {
+                    sans: ["var(--font-sans)"],
+                }
+            },
+        }
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(210 40% 98%);
+            --foreground: hsl(222 84% 5%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222 84% 5%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222 84% 5%);
+            --primary: hsl(221 83% 53%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(210 40% 96%);
+            --secondary-foreground: hsl(222 84% 5%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215 16% 47%);
+            --accent: hsl(210 40% 96%);
+            --accent-foreground: hsl(222 84% 5%);
+            --destructive: hsl(0 84% 60%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214 32% 91%);
+            --input: hsl(214 32% 91%);
+            --ring: hsl(221 83% 53%);
+            --radius: 0.5rem;
+            --chart-1: hsl(12 76% 61%);
+            --chart-2: hsl(173 58% 39%);
+            --chart-3: hsl(197 37% 24%);
+            --chart-4: hsl(43 74% 66%);
+            --chart-5: hsl(27 87% 67%);
+            --font-sans: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+        }
+        
+        [data-theme="dark"] {
+            --background: hsl(222 84% 5%);
+            --foreground: hsl(210 40% 98%);
+            --card: hsl(222 84% 8%);
+            --card-foreground: hsl(210 40% 98%);
+            --popover: hsl(222 84% 8%);
+            --popover-foreground: hsl(210 40% 98%);
+            --primary: hsl(217 91% 60%);
+            --primary-foreground: hsl(222 47% 11%);
+            --secondary: hsl(217 32% 17%);
+            --secondary-foreground: hsl(210 40% 98%);
+            --muted: hsl(217 32% 17%);
+            --muted-foreground: hsl(215 20% 65%);
+            --accent: hsl(217 32% 17%);
+            --accent-foreground: hsl(210 40% 98%);
+            --destructive: hsl(0 62% 30%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(217 32% 17%);
+            --input: hsl(217 32% 17%);
+        }
+
+        * {
+            border-color: hsl(var(--border));
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-family: var(--font-sans);
+        }
+
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notification-slide {
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* RTL specific styles */
+        .rtl-flip {
+            transform: scaleX(-1);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: hsl(var(--muted));
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: hsl(var(--muted-foreground));
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-background text-foreground">
+    <!-- @COMPONENT: Header [Top navigation with user info and notifications] -->
+    <header class="bg-card border-b border-border px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <button id="sidebarToggle" class="lg:hidden text-muted-foreground hover:text-foreground transition-colors">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calculator text-primary-foreground text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">نظام إبراهيم للمحاسبة</h1>
+                    <p class="text-sm text-muted-foreground">النسخة 1.0</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <!-- Notifications -->
+            <div class="relative">
+                <button class="relative p-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <i class="fas fa-bell text-lg"></i>
+                    <span class="absolute -top-1 -left-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center">3</span>
+                </button>
+            </div>
+            
+            <!-- Theme Toggle -->
+            <button id="themeToggle" class="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <i class="fas fa-moon text-lg"></i>
+            </button>
+            
+            <!-- User Profile -->
+            <div class="flex items-center gap-3 pr-4 border-r border-border">
+                <div class="text-left">
+                    <p class="text-sm font-medium" data-bind="user.name">أحمد المحمد</p>
+                    <p class="text-xs text-muted-foreground" data-bind="user.role">مالك النظام</p>
+                </div>
+                <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                    <i class="fas fa-user text-primary-foreground text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <div class="flex h-[calc(100vh-80px)]">
+        <!-- @COMPONENT: Sidebar [Navigation menu with role-based access] -->
+        <aside id="sidebar" class="w-64 bg-card border-l border-border overflow-y-auto sidebar-transition lg:translate-x-0 -translate-x-full fixed lg:static inset-y-0 right-0 z-40">
+            <nav class="p-6 space-y-2">
+                <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-primary-foreground transition-colors">
+                    <i class="fas fa-home text-lg"></i>
+                    <span>لوحة التحكم</span>
+                </a>
+                
+                <div class="space-y-1">
+                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-2">العمليات المالية</p>
+                    
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
+                        <i class="fas fa-arrow-up text-lg text-green-500"></i>
+                        <span>الإيرادات</span>
+                    </a>
+                    
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
+                        <i class="fas fa-arrow-down text-lg text-red-500"></i>
+                        <span>المصروفات</span>
+                    </a>
+                </div>
+                
+                <div class="space-y-1">
+                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-2">إدارة المخزون</p>
+                    
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
+                        <i class="fas fa-boxes text-lg"></i>
+                        <span>المنتجات</span>
+                    </a>
+                    
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
+                        <i class="fas fa-warehouse text-lg"></i>
+                        <span>المستودع</span>
+                    </a>
+                </div>
+                
+                <div class="space-y-1">
+                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-2">التقارير والإحصائيات</p>
+                    
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
+                        <i class="fas fa-chart-bar text-lg"></i>
+                        <span>التقارير المالية</span>
+                    </a>
+                    
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
+                        <i class="fas fa-file-pdf text-lg"></i>
+                        <span>تصدير التقارير</span>
+                    </a>
+                </div>
+                
+                <div class="space-y-1">
+                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-2">إدارة النظام</p>
+                    
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
+                        <i class="fas fa-users text-lg"></i>
+                        <span>المستخدمين</span>
+                    </a>
+                    
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
+                        <i class="fas fa-cog text-lg"></i>
+                        <span>الإعدادات</span>
+                    </a>
+                    
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
+                        <i class="fas fa-shield-alt text-lg"></i>
+                        <span>النسخ الاحتياطي</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- Sidebar Overlay -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 lg:hidden hidden" onclick="toggleSidebar()"></div>
+
+        <!-- @COMPONENT: MainContent [Dashboard content area] -->
+        <main class="flex-1 overflow-y-auto p-6">
+            <!-- Status Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Revenue Card -->
+                <div class="bg-card rounded-lg border border-border p-6 fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-arrow-up text-green-600 text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-2xl font-bold text-green-600" data-bind="totalRevenue">150,000</p>
+                            <p class="text-sm text-muted-foreground">ليرة سورية</p>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-1">إجمالي الإيرادات</h3>
+                    <p class="text-sm text-green-600 flex items-center gap-1">
+                        <i class="fas fa-arrow-up text-xs"></i>
+                        +12% عن الشهر الماضي
+                    </p>
+                </div>
+
+                <!-- Expenses Card -->
+                <div class="bg-card rounded-lg border border-border p-6 fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-arrow-down text-red-600 text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-2xl font-bold text-red-600" data-bind="totalExpenses">85,000</p>
+                            <p class="text-sm text-muted-foreground">ليرة سورية</p>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-1">إجمالي المصروفات</h3>
+                    <p class="text-sm text-red-600 flex items-center gap-1">
+                        <i class="fas fa-arrow-up text-xs"></i>
+                        +8% عن الشهر الماضي
+                    </p>
+                </div>
+
+                <!-- Profit Card -->
+                <div class="bg-card rounded-lg border border-border p-6 fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-2xl font-bold text-blue-600" data-bind="netProfit">65,000</p>
+                            <p class="text-sm text-muted-foreground">ليرة سورية</p>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-1">صافي الربح</h3>
+                    <p class="text-sm text-blue-600 flex items-center gap-1">
+                        <i class="fas fa-arrow-up text-xs"></i>
+                        +18% عن الشهر الماضي
+                    </p>
+                </div>
+
+                <!-- Subscription Card -->
+                <div class="bg-card rounded-lg border border-border p-6 fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-calendar text-amber-600 text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-2xl font-bold text-amber-600" data-bind="subscriptionDays">45</p>
+                            <p class="text-sm text-muted-foreground">يوم متبقي</p>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-1">حالة الاشتراك</h3>
+                    <p class="text-sm text-amber-600">ينتهي في 15/02/2024</p>
+                </div>
+            </div>
+
+            <!-- Charts and Tables Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Revenue Chart -->
+                <div class="bg-card rounded-lg border border-border p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold">الإيرادات الشهرية</h3>
+                        <select class="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm">
+                            <option data-mock="true">2024</option>
+                            <option data-mock="true">2023</option>
+                        </select>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Currency Distribution -->
+                <div class="bg-card rounded-lg border border-border p-6">
+                    <h3 class="text-lg font-semibold mb-6">توزيع العملات</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+                                <span class="text-sm">ليرة سورية</span>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-medium" data-mock="true">150,000</p>
+                                <p class="text-sm text-muted-foreground">65%</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                                <span class="text-sm">دولار أمريكي</span>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-medium" data-mock="true">2,100</p>
+                                <p class="text-sm text-muted-foreground">25%</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                                <span class="text-sm">ليرة تركية</span>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-medium" data-mock="true">15,500</p>
+                                <p class="text-sm text-muted-foreground">10%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <canvas id="currencyChart" width="100" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions and Notifications -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Recent Transactions -->
+                <div class="lg:col-span-2 bg-card rounded-lg border border-border">
+                    <div class="p-6 border-b border-border">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold">العمليات الأخيرة</h3>
+                            <button class="text-primary hover:text-primary/80 text-sm font-medium">عرض الكل</button>
+                        </div>
+                    </div>
+                    <div class="divide-y divide-border">
+                        <!-- @MAP: recentTransactions.map(transaction => ( -->
+                        <div class="p-6 flex items-center justify-between hover:bg-accent transition-colors" data-mock="true">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-arrow-up text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium" data-mock="true">بيع منتجات</p>
+                                    <p class="text-sm text-muted-foreground" data-mock="true">15 يناير 2024 - 10:30 ص</p>
+                                </div>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-semibold text-green-600" data-mock="true">+25,000 ل.س</p>
+                                <p class="text-xs text-muted-foreground" data-mock="true">نقداً</p>
+                            </div>
+                        </div>
+
+                        <div class="p-6 flex items-center justify-between hover:bg-accent transition-colors" data-mock="true">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-arrow-down text-red-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium" data-mock="true">شراء مواد خام</p>
+                                    <p class="text-sm text-muted-foreground" data-mock="true">14 يناير 2024 - 2:15 م</p>
+                                </div>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-semibold text-red-600" data-mock="true">-12,000 ل.س</p>
+                                <p class="text-xs text-muted-foreground" data-mock="true">حوالة</p>
+                            </div>
+                        </div>
+
+                        <div class="p-6 flex items-center justify-between hover:bg-accent transition-colors" data-mock="true">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-handshake text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium" data-mock="true">خدمة صيانة</p>
+                                    <p class="text-sm text-muted-foreground" data-mock="true">13 يناير 2024 - 11:45 ص</p>
+                                </div>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-semibold text-green-600" data-mock="true">+8,500 ل.س</p>
+                                <p class="text-xs text-muted-foreground" data-mock="true">بطاقة</p>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+
+                <!-- Notifications and Alerts -->
+                <div class="bg-card rounded-lg border border-border">
+                    <div class="p-6 border-b border-border">
+                        <h3 class="text-lg font-semibold">التنبيهات</h3>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <!-- Low Stock Alert -->
+                        <div class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg" data-mock="true">
+                            <i class="fas fa-exclamation-triangle text-amber-600 text-lg mt-1"></i>
+                            <div>
+                                <p class="text-sm font-medium text-amber-800">نقص في المخزون</p>
+                                <p class="text-xs text-amber-700 mt-1">منتج "أكياس السكر" متبقي 5 قطع فقط</p>
+                            </div>
+                        </div>
+
+                        <!-- Subscription Expiry -->
+                        <div class="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg" data-mock="true">
+                            <i class="fas fa-calendar-times text-red-600 text-lg mt-1"></i>
+                            <div>
+                                <p class="text-sm font-medium text-red-800">انتهاء الاشتراك قريباً</p>
+                                <p class="text-xs text-red-700 mt-1">ينتهي اشتراكك بعد 45 يوم</p>
+                            </div>
+                        </div>
+
+                        <!-- High Spending Alert -->
+                        <div class="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg" data-mock="true">
+                            <i class="fas fa-chart-line text-blue-600 text-lg mt-1"></i>
+                            <div>
+                                <p class="text-sm font-medium text-blue-800">إنفاق عالي هذا الشهر</p>
+                                <p class="text-xs text-blue-700 mt-1">تجاوزت المصروفات 80,000 ل.س</p>
+                            </div>
+                        </div>
+
+                        <!-- Backup Reminder -->
+                        <div class="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg" data-mock="true">
+                            <i class="fas fa-shield-alt text-green-600 text-lg mt-1"></i>
+                            <div>
+                                <p class="text-sm font-medium text-green-800">نسخة احتياطية جديدة</p>
+                                <p class="text-xs text-green-700 mt-1">تم إنشاء نسخة احتياطية بنجاح</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="mt-8">
+                <h3 class="text-lg font-semibold mb-4">إجراءات سريعة</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <button class="flex items-center gap-3 p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openAddRevenue">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-plus text-green-600"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium">إضافة إيراد</p>
+                            <p class="text-sm text-muted-foreground">تسجيل إيراد جديد</p>
+                        </div>
+                    </button>
+
+                    <button class="flex items-center gap-3 p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openAddExpense">
+                        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-minus text-red-600"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium">إضافة مصروف</p>
+                            <p class="text-sm text-muted-foreground">تسجيل مصروف جديد</p>
+                        </div>
+                    </button>
+
+                    <button class="flex items-center gap-3 p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openAddProduct">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-box text-blue-600"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium">إضافة منتج</p>
+                            <p class="text-sm text-muted-foreground">إضافة منتج للمخزون</p>
+                        </div>
+                    </button>
+
+                    <button class="flex items-center gap-3 p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:generateReport">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-file-alt text-purple-600"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium">إنشاء تقرير</p>
+                            <p class="text-sm text-muted-foreground">تقرير مالي سريع</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </main>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+
+    <script>
+        // Sidebar Toggle Functionality
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+
+        // Theme Toggle Functionality
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            
+            const icon = this.querySelector('i');
+            if (newTheme === 'dark') {
+                icon.className = 'fas fa-sun text-lg';
+            } else {
+                icon.className = 'fas fa-moon text-lg';
+            }
+        });
+
+        // Initialize Charts
+        (function() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
+                    datasets: [{
+                        label: 'الإيرادات',
+                        data: [120000, 135000, 128000, 145000, 152000, 148000, 162000, 158000, 171000, 165000, 178000, 185000],
+                        borderColor: 'hsl(var(--primary))',
+                        backgroundColor: 'hsl(var(--primary) / 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'hsl(var(--border))'
+                            },
+                            ticks: {
+                                color: 'hsl(var(--muted-foreground))'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: 'hsl(var(--muted-foreground))'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Currency Pie Chart
+            const currencyCtx = document.getElementById('currencyChart').getContext('2d');
+            new Chart(currencyCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ليرة سورية', 'دولار أمريكي', 'ليرة تركية'],
+                    datasets: [{
+                        data: [65, 25, 10],
+                        backgroundColor: [
+                            'hsl(221 83% 53%)',
+                            'hsl(142 76% 36%)',
+                            'hsl(0 84% 60%)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        })();
+
+        // TODO: Implement business logic, API calls, and state management for:
+        // - User authentication and role-based access control
+        // - Real-time data updates for dashboard metrics
+        // - CRUD operations for revenues, expenses, and inventory
+        // - Report generation and export functionality
+        // - Notification system with real-time alerts
+        // - Multi-currency conversion and calculations
+        // - Subscription management and billing
+        // - Backup and restore functionality
+    </script>
+</body>
+</html>

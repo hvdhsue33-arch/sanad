@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/queryClient";
 import { z } from "zod";
 import { CURRENCIES, TRANSACTION_TYPES, PAYMENT_METHODS } from "@/lib/constants";
 
@@ -52,7 +52,7 @@ export default function RevenueForm({ revenue, onSuccess, onCancel }: RevenueFor
   const createMutation = useMutation({
     mutationFn: async (data: RevenueFormData) => {
       const totalAmount = data.quantity * data.unitPrice;
-      await apiRequest("POST", "/api/revenues", {
+      await apiClient.post("/api/revenues", {
         ...data,
         totalAmount,
       });
@@ -79,7 +79,7 @@ export default function RevenueForm({ revenue, onSuccess, onCancel }: RevenueFor
   const updateMutation = useMutation({
     mutationFn: async (data: RevenueFormData) => {
       const totalAmount = data.quantity * data.unitPrice;
-      await apiRequest("PUT", `/api/revenues/${revenue.id}`, {
+      await apiClient.put(`/api/revenues/${revenue.id}`, {
         ...data,
         totalAmount,
       });

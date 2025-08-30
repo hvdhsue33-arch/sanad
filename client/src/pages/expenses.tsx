@@ -6,7 +6,7 @@ import { Plus, Edit, Trash2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, formatDate, getExpenseTypeDisplayName, getPaymentMethodDisplayName } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/queryClient";
 import ExpenseForm from "@/components/forms/expense-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -24,7 +24,7 @@ export default function Expenses() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/expenses/${id}`);
+      await apiClient.delete(`/api/expenses/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });

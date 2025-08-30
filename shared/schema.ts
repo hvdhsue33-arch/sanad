@@ -1,265 +1,345 @@
-import { sql } from 'drizzle-orm';
-import {
-  index,
-  jsonb,
-  pgTable,
-  timestamp,
-  varchar,
-  text,
-  decimal,
-  integer,
-  pgEnum,
-  boolean,
-} from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { createInsertSchema } from "drizzle-zod";
+import mongoose, { Schema, Document } from 'mongoose';
 import { z } from "zod";
 
-// Session storage table
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)],
-);
+// MongoDB Connection
+export const connectDB = async () => {
+  try {
+    const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://sehx0190_db_user:Sanad$sa19971997@cluster0.yselhek.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+    await mongoose.connect(mongoURI);
+    console.log('MongoDB connected successfully');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    process.exit(1);
+  }
+};
 
 // Enums
-export const userRoleEnum = pgEnum('user_role', [
-  'super_admin',
-  'owner', 
-  'manager',
-  'accountant',
-  'warehouse_keeper',
-  'viewer'
-]);
+export const UserRole = {
+  SUPER_ADMIN: 'super_admin',
+  OWNER: 'owner',
+  MANAGER: 'manager',
+  ACCOUNTANT: 'accountant',
+  WAREHOUSE_KEEPER: 'warehouse_keeper',
+  VIEWER: 'viewer'
+} as const;
 
-export const currencyEnum = pgEnum('currency', [
-  'SYP', // Syrian Pound
-  'TRY', // Turkish Lira
-  'USD'  // US Dollar
-]);
+export const Currency = {
+  SYP: 'SYP', // Syrian Pound
+  TRY: 'TRY', // Turkish Lira
+  USD: 'USD'  // US Dollar
+} as const;
 
-export const transactionTypeEnum = pgEnum('transaction_type', [
-  'sale',
-  'service', 
-  'advance_payment',
-  'other'
-]);
+export const TransactionType = {
+  SALE: 'sale',
+  SERVICE: 'service',
+  ADVANCE_PAYMENT: 'advance_payment',
+  OTHER: 'other'
+} as const;
 
-export const paymentMethodEnum = pgEnum('payment_method', [
-  'cash',
-  'card',
-  'transfer',
-  'other'
-]);
+export const PaymentMethod = {
+  CASH: 'cash',
+  CARD: 'card',
+  TRANSFER: 'transfer',
+  OTHER: 'other'
+} as const;
 
-export const expenseTypeEnum = pgEnum('expense_type', [
-  'rent',
-  'salaries',
-  'services',
-  'purchase',
-  'utilities',
-  'maintenance',
-  'other'
-]);
+export const ExpenseType = {
+  RENT: 'rent',
+  SALARIES: 'salaries',
+  SERVICES: 'services',
+  PURCHASE: 'purchase',
+  UTILITIES: 'utilities',
+  MAINTENANCE: 'maintenance',
+  OTHER: 'other'
+} as const;
 
-// Users table
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: varchar("username", { length: 50 }).notNull().unique(),
-  email: varchar("email").unique(),
-  password: text("password").notNull(),
-  firstName: varchar("first_name", { length: 50 }),
-  lastName: varchar("last_name", { length: 50 }),
-  role: userRoleEnum('role').notNull().default('viewer'),
-  isActive: boolean("is_active").notNull().default(true),
-  tenantId: varchar("tenant_id").notNull(),
-  profileImageUrl: varchar("profile_image_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+// Interfaces
+export interface IUser extends Document {
+  username: string;
+  email?: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  role: keyof typeof UserRole;
+  isActive: boolean;
+  tenantId: string;
+  profileImageUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ITenant extends Document {
+  name: string;
+  subscriptionExpiresAt: Date;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IProduct extends Document {
+  name: string;
+  category?: string;
+  unit: string;
+  quantity: number;
+  purchasePrice: number;
+  salePrice: number;
+  supplier?: string;
+  minStockLevel: number;
+  tenantId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IRevenue extends Document {
+  operationNumber: string;
+  customerName?: string;
+  transactionType: keyof typeof TransactionType;
+  productService: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  currency: keyof typeof Currency;
+  paymentMethod: keyof typeof PaymentMethod;
+  notes?: string;
+  tenantId: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IExpense extends Document {
+  operationNumber: string;
+  supplierName?: string;
+  expenseType: keyof typeof ExpenseType;
+  description: string;
+  amount: number;
+  currency: keyof typeof Currency;
+  paymentMethod: keyof typeof PaymentMethod;
+  notes?: string;
+  tenantId: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface INotification extends Document {
+  title: string;
+  message: string;
+  type: string; // low_stock, subscription_expiry, high_spending, backup_success
+  isRead: boolean;
+  tenantId: string;
+  createdAt: Date;
+}
+
+// Schemas
+const UserSchema = new Schema<IUser>({
+  username: { type: String, required: true, unique: true, maxlength: 50 },
+  email: { type: String, unique: true, sparse: true },
+  password: { type: String, required: true },
+  firstName: { type: String, maxlength: 50 },
+  lastName: { type: String, maxlength: 50 },
+  role: { 
+    type: String, 
+    required: true, 
+    enum: Object.values(UserRole),
+    default: UserRole.VIEWER 
+  },
+  isActive: { type: Boolean, required: true, default: true },
+  tenantId: { type: String, required: true },
+  profileImageUrl: String,
+}, {
+  timestamps: true
 });
 
-// Tenants table for multi-tenant support
-export const tenants = pgTable("tenants", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name", { length: 100 }).notNull(),
-  subscriptionExpiresAt: timestamp("subscription_expires_at").notNull(),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+const TenantSchema = new Schema<ITenant>({
+  name: { type: String, required: true, maxlength: 100 },
+  subscriptionExpiresAt: { type: Date, required: true },
+  isActive: { type: Boolean, required: true, default: true },
+}, {
+  timestamps: true
 });
 
-// Products table
-export const products = pgTable("products", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name", { length: 100 }).notNull(),
-  category: varchar("category", { length: 50 }),
-  unit: varchar("unit", { length: 20 }).notNull(), // unit of measurement
-  quantity: integer("quantity").notNull().default(0),
-  purchasePrice: decimal("purchase_price", { precision: 15, scale: 2 }).notNull(),
-  salePrice: decimal("sale_price", { precision: 15, scale: 2 }).notNull(),
-  supplier: varchar("supplier", { length: 100 }),
-  minStockLevel: integer("min_stock_level").notNull().default(0),
-  tenantId: varchar("tenant_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+const ProductSchema = new Schema<IProduct>({
+  name: { type: String, required: true, maxlength: 100 },
+  category: { type: String, maxlength: 50 },
+  unit: { type: String, required: true, maxlength: 20 },
+  quantity: { type: Number, required: true, default: 0 },
+  purchasePrice: { type: Number, required: true },
+  salePrice: { type: Number, required: true },
+  supplier: { type: String, maxlength: 100 },
+  minStockLevel: { type: Number, required: true, default: 0 },
+  tenantId: { type: String, required: true },
+}, {
+  timestamps: true
 });
 
-// Revenues table
-export const revenues = pgTable("revenues", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  operationNumber: varchar("operation_number", { length: 20 }).notNull(),
-  customerName: varchar("customer_name", { length: 100 }),
-  transactionType: transactionTypeEnum('transaction_type').notNull(),
-  productService: varchar("product_service", { length: 100 }).notNull(),
-  quantity: integer("quantity").notNull().default(1),
-  unitPrice: decimal("unit_price", { precision: 15, scale: 2 }).notNull(),
-  totalAmount: decimal("total_amount", { precision: 15, scale: 2 }).notNull(),
-  currency: currencyEnum('currency').notNull(),
-  paymentMethod: paymentMethodEnum('payment_method').notNull(),
-  notes: text("notes"),
-  tenantId: varchar("tenant_id").notNull(),
-  createdBy: varchar("created_by").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+const RevenueSchema = new Schema<IRevenue>({
+  operationNumber: { type: String, required: true, maxlength: 20 },
+  customerName: { type: String, maxlength: 100 },
+  transactionType: { 
+    type: String, 
+    required: true, 
+    enum: Object.values(TransactionType) 
+  },
+  productService: { type: String, required: true, maxlength: 100 },
+  quantity: { type: Number, required: true, default: 1 },
+  unitPrice: { type: Number, required: true },
+  totalAmount: { type: Number, required: true },
+  currency: { 
+    type: String, 
+    required: true, 
+    enum: Object.values(Currency) 
+  },
+  paymentMethod: { 
+    type: String, 
+    required: true, 
+    enum: Object.values(PaymentMethod) 
+  },
+  notes: String,
+  tenantId: { type: String, required: true },
+  createdBy: { type: String, required: true },
+}, {
+  timestamps: true
 });
 
-// Expenses table
-export const expenses = pgTable("expenses", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  operationNumber: varchar("operation_number", { length: 20 }).notNull(),
-  supplierName: varchar("supplier_name", { length: 100 }),
-  expenseType: expenseTypeEnum('expense_type').notNull(),
-  description: varchar("description", { length: 200 }).notNull(),
-  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
-  currency: currencyEnum('currency').notNull(),
-  paymentMethod: paymentMethodEnum('payment_method').notNull(),
-  notes: text("notes"),
-  tenantId: varchar("tenant_id").notNull(),
-  createdBy: varchar("created_by").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+const ExpenseSchema = new Schema<IExpense>({
+  operationNumber: { type: String, required: true, maxlength: 20 },
+  supplierName: { type: String, maxlength: 100 },
+  expenseType: { 
+    type: String, 
+    required: true, 
+    enum: Object.values(ExpenseType) 
+  },
+  description: { type: String, required: true, maxlength: 200 },
+  amount: { type: Number, required: true },
+  currency: { 
+    type: String, 
+    required: true, 
+    enum: Object.values(Currency) 
+  },
+  paymentMethod: { 
+    type: String, 
+    required: true, 
+    enum: Object.values(PaymentMethod) 
+  },
+  notes: String,
+  tenantId: { type: String, required: true },
+  createdBy: { type: String, required: true },
+}, {
+  timestamps: true
 });
 
-// Notifications table
-export const notifications = pgTable("notifications", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  title: varchar("title", { length: 100 }).notNull(),
-  message: text("message").notNull(),
-  type: varchar("type", { length: 20 }).notNull(), // low_stock, subscription_expiry, high_spending, backup_success
-  isRead: boolean("is_read").notNull().default(false),
-  tenantId: varchar("tenant_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+const NotificationSchema = new Schema<INotification>({
+  title: { type: String, required: true, maxlength: 100 },
+  message: { type: String, required: true },
+  type: { type: String, required: true, maxlength: 20 },
+  isRead: { type: Boolean, required: true, default: false },
+  tenantId: { type: String, required: true },
+}, {
+  timestamps: { createdAt: true, updatedAt: false }
 });
 
-// Relations
-export const usersRelations = relations(users, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [users.tenantId],
-    references: [tenants.id],
-  }),
-}));
+// Indexes
+UserSchema.index({ username: 1 });
+UserSchema.index({ tenantId: 1 });
+TenantSchema.index({ subscriptionExpiresAt: 1 });
+ProductSchema.index({ tenantId: 1 });
+ProductSchema.index({ quantity: 1 });
+RevenueSchema.index({ tenantId: 1 });
+RevenueSchema.index({ createdAt: -1 });
+ExpenseSchema.index({ tenantId: 1 });
+ExpenseSchema.index({ createdAt: -1 });
+NotificationSchema.index({ tenantId: 1 });
+NotificationSchema.index({ isRead: 1 });
 
-export const tenantsRelations = relations(tenants, ({ many }) => ({
-  users: many(users),
-  products: many(products),
-  revenues: many(revenues),
-  expenses: many(expenses),
-  notifications: many(notifications),
-}));
+// Models
+export const User = mongoose.model<IUser>('User', UserSchema);
+export const Tenant = mongoose.model<ITenant>('Tenant', TenantSchema);
+export const Product = mongoose.model<IProduct>('Product', ProductSchema);
+export const Revenue = mongoose.model<IRevenue>('Revenue', RevenueSchema);
+export const Expense = mongoose.model<IExpense>('Expense', ExpenseSchema);
+export const Notification = mongoose.model<INotification>('Notification', NotificationSchema);
 
-export const productsRelations = relations(products, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [products.tenantId],
-    references: [tenants.id],
-  }),
-}));
-
-export const revenuesRelations = relations(revenues, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [revenues.tenantId],
-    references: [tenants.id],
-  }),
-  createdByUser: one(users, {
-    fields: [revenues.createdBy],
-    references: [users.id],
-  }),
-}));
-
-export const expensesRelations = relations(expenses, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [expenses.tenantId],
-    references: [tenants.id],
-  }),
-  createdByUser: one(users, {
-    fields: [expenses.createdBy],
-    references: [users.id],
-  }),
-}));
-
-export const notificationsRelations = relations(notifications, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [notifications.tenantId],
-    references: [tenants.id],
-  }),
-}));
-
-// Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+// Zod Schemas for validation
+export const insertUserSchema = z.object({
+  username: z.string().min(1).max(50),
+  email: z.string().email().optional(),
+  password: z.string().min(6),
+  firstName: z.string().max(50).optional(),
+  lastName: z.string().max(50).optional(),
+  role: z.enum(Object.values(UserRole) as [string, ...string[]]),
+  isActive: z.boolean().default(true),
+  tenantId: z.string(),
+  profileImageUrl: z.string().optional(),
 });
 
-export const insertTenantSchema = createInsertSchema(tenants).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertTenantSchema = z.object({
+  name: z.string().min(1).max(100),
+  subscriptionExpiresAt: z.date(),
+  isActive: z.boolean().default(true),
 });
 
-export const insertProductSchema = createInsertSchema(products).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertProductSchema = z.object({
+  name: z.string().min(1).max(100),
+  category: z.string().max(50).optional(),
+  unit: z.string().min(1).max(20),
+  quantity: z.number().min(0),
+  purchasePrice: z.number().positive(),
+  salePrice: z.number().positive(),
+  supplier: z.string().max(100).optional(),
+  minStockLevel: z.number().min(0).default(0),
+  tenantId: z.string(),
 });
 
-export const insertRevenueSchema = createInsertSchema(revenues).omit({
-  id: true,
-  operationNumber: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertRevenueSchema = z.object({
+  customerName: z.string().max(100).optional(),
+  transactionType: z.enum(Object.values(TransactionType) as [string, ...string[]]),
+  productService: z.string().min(1).max(100),
+  quantity: z.number().min(1).default(1),
+  unitPrice: z.number().positive(),
+  totalAmount: z.number().positive(),
+  currency: z.enum(Object.values(Currency) as [string, ...string[]]),
+  paymentMethod: z.enum(Object.values(PaymentMethod) as [string, ...string[]]),
+  notes: z.string().optional(),
+  tenantId: z.string(),
+  createdBy: z.string(),
 });
 
-export const insertExpenseSchema = createInsertSchema(expenses).omit({
-  id: true,
-  operationNumber: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertExpenseSchema = z.object({
+  supplierName: z.string().max(100).optional(),
+  expenseType: z.enum(Object.values(ExpenseType) as [string, ...string[]]),
+  description: z.string().min(1).max(200),
+  amount: z.number().positive(),
+  currency: z.enum(Object.values(Currency) as [string, ...string[]]),
+  paymentMethod: z.enum(Object.values(PaymentMethod) as [string, ...string[]]),
+  notes: z.string().optional(),
+  tenantId: z.string(),
+  createdBy: z.string(),
 });
 
-export const insertNotificationSchema = createInsertSchema(notifications).omit({
-  id: true,
-  createdAt: true,
+export const insertNotificationSchema = z.object({
+  title: z.string().min(1).max(100),
+  message: z.string().min(1),
+  type: z.string().min(1).max(20),
+  isRead: z.boolean().default(false),
+  tenantId: z.string(),
 });
 
 // Types
-export type User = typeof users.$inferSelect;
+export type User = IUser;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
-export type Tenant = typeof tenants.$inferSelect;
+export type Tenant = ITenant;
 export type InsertTenant = z.infer<typeof insertTenantSchema>;
 
-export type Product = typeof products.$inferSelect;
+export type Product = IProduct;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 
-export type Revenue = typeof revenues.$inferSelect;
+export type Revenue = IRevenue;
 export type InsertRevenue = z.infer<typeof insertRevenueSchema>;
 
-export type Expense = typeof expenses.$inferSelect;
+export type Expense = IExpense;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 
-export type Notification = typeof notifications.$inferSelect;
+export type Notification = INotification;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;

@@ -6,7 +6,7 @@ import { Plus, Edit, Trash2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, formatDate, getTransactionTypeDisplayName, getPaymentMethodDisplayName } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/queryClient";
 import RevenueForm from "@/components/forms/revenue-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -24,7 +24,7 @@ export default function Revenues() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/revenues/${id}`);
+      await apiClient.delete(`/api/revenues/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/revenues"] });

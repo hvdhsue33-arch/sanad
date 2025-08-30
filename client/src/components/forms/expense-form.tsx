@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/queryClient";
 import { z } from "zod";
 import { CURRENCIES, EXPENSE_TYPES, PAYMENT_METHODS } from "@/lib/constants";
 
@@ -49,7 +49,7 @@ export default function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFor
 
   const createMutation = useMutation({
     mutationFn: async (data: ExpenseFormData) => {
-      await apiRequest("POST", "/api/expenses", data);
+      await apiClient.post("/api/expenses", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
@@ -72,7 +72,7 @@ export default function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFor
 
   const updateMutation = useMutation({
     mutationFn: async (data: ExpenseFormData) => {
-      await apiRequest("PUT", `/api/expenses/${expense.id}`, data);
+      await apiClient.put(`/api/expenses/${expense.id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });

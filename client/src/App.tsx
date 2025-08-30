@@ -4,8 +4,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
 // Pages
+import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Revenues from "@/pages/revenues";
 import Expenses from "@/pages/expenses";
@@ -19,33 +21,58 @@ import NotFound from "@/pages/not-found";
 // Layout
 import Layout from "@/components/layout/layout";
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
+  return <>{children}</>;
+}
+
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/revenues" component={Revenues} />
-        <Route path="/expenses" component={Expenses} />
-        <Route path="/products" component={Products} />
-        <Route path="/warehouse" component={Warehouse} />
-        <Route path="/reports" component={Reports} />
-        <Route path="/users" component={Users} />
-        <Route path="/settings" component={Settings} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <ProtectedRoute>
+      <Layout>
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/revenues" component={Revenues} />
+          <Route path="/expenses" component={Expenses} />
+          <Route path="/products" component={Products} />
+          <Route path="/warehouse" component={Warehouse} />
+          <Route path="/reports" component={Reports} />
+          <Route path="/users" component={Users} />
+          <Route path="/settings" component={Settings} />
+          <Route component={NotFound} />
+        </Switch>
+      </Layout>
+    </ProtectedRoute>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="accounting-theme">
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider defaultTheme="light" storageKey="accounting-theme">
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
