@@ -1,5 +1,5 @@
 export const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-backend-url.netlify.app/api' 
+  ? 'https://sanad22.netlify.app/api' 
   : 'http://localhost:3000/api';
 
 export const APP_NAME = "نظام إبراهيم للمحاسبة";
