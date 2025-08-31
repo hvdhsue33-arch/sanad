@@ -20,11 +20,13 @@ export default function Products() {
   const queryClient = useQueryClient();
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ["/api/products"],
+    queryKey: ["products"],
+    queryFn: () => apiClient.get("/api/products"),
   });
 
   const { data: lowStockProducts } = useQuery({
-    queryKey: ["/api/products/low-stock"],
+    queryKey: ["products", "low-stock"],
+    queryFn: () => apiClient.get("/api/products/low-stock"),
   });
 
   const deleteMutation = useMutation({
@@ -32,8 +34,8 @@ export default function Products() {
       await apiClient.delete(`/api/products/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products/low-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", "low-stock"] });
       toast({
         title: "تم الحذف بنجاح",
         description: "تم حذف المنتج بنجاح",

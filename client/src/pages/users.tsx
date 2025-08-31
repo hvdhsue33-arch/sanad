@@ -8,63 +8,63 @@ import { Input } from "@/components/ui/input";
 import { getRoleDisplayName, formatDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/queryClient";
+import UserForm from "@/components/forms/user-form";
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Mock users data since there's no users API endpoint in the backend
-  const mockUsers = [
-    {
-      id: "1",
-      username: "admin",
-      firstName: "أحمد",
-      lastName: "المحمد",
-      email: "admin@example.com",
-      role: "super_admin",
-      isActive: true,
-      createdAt: "2024-01-15T10:30:00Z"
-    },
-    {
-      id: "2", 
-      username: "manager1",
-      firstName: "سارة",
-      lastName: "أحمد",
-      email: "sara@example.com",
-      role: "manager",
-      isActive: true,
-      createdAt: "2024-01-20T14:15:00Z"
-    },
-    {
-      id: "3",
-      username: "accountant1", 
-      firstName: "محمد",
-      lastName: "علي",
-      email: "mohammed@example.com",
-      role: "accountant",
-      isActive: true,
-      createdAt: "2024-02-01T09:00:00Z"
-    },
-    {
-      id: "4",
-      username: "warehouse1",
-      firstName: "فاطمة",
-      lastName: "حسن",
-      email: "fatima@example.com", 
-      role: "warehouse_keeper",
-      isActive: false,
-      createdAt: "2024-02-10T16:45:00Z"
-    }
-  ];
+  const { data: users, isLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => apiClient.get("/api/users"),
+  });
 
-  const filteredUsers = mockUsers.filter((user: any) =>
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiClient.delete(`/api/users/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast({
+        title: "تم الحذف بنجاح",
+        description: "تم حذف المستخدم بنجاح",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ في الحذف",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleUserMutation = useMutation({
+    mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
+      await apiClient.put(`/api/users/${userId}`, { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const filteredUsers = Array.isArray(users) ? users.filter((user: any) =>
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) : [];
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -86,24 +86,32 @@ export default function Users() {
   };
 
   const handleAddUser = () => {
-    toast({
-      title: "قريباً",
-      description: "إضافة المستخدمين ستكون متاحة قريباً",
-    });
+    setEditingUser(null);
+    setShowUserForm(true);
   };
 
   const handleEditUser = (user: any) => {
-    toast({
-      title: "قريباً", 
-      description: "تعديل المستخدمين سيكون متاحاً قريباً",
-    });
+    setEditingUser(user);
+    setShowUserForm(true);
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    if (window.confirm("هل أنت متأكد من حذف هذا المستخدم؟")) {
+      deleteMutation.mutate(userId);
+    }
   };
 
   const handleToggleUser = (userId: string, isActive: boolean) => {
-    toast({
-      title: isActive ? "تم إلغاء التفعيل" : "تم التفعيل",
-      description: `تم ${isActive ? 'إلغاء تفعيل' : 'تفعيل'} المستخدم بنجاح`,
-    });
+    toggleUserMutation.mutate({ userId, isActive: !isActive });
+  };
+
+  const handleFormSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+  };
+
+  const handleFormClose = () => {
+    setShowUserForm(false);
+    setEditingUser(null);
   };
 
   return (
@@ -138,7 +146,7 @@ export default function Users() {
               </div>
               <div className="text-left">
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {mockUsers.length}
+                  {Array.isArray(users) ? users.length : 0}
                 </p>
               </div>
             </div>
@@ -154,7 +162,7 @@ export default function Users() {
               </div>
               <div className="text-left">
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {mockUsers.filter(u => u.isActive).length}
+                  {Array.isArray(users) ? users.filter(u => u.isActive).length : 0}
                 </p>
               </div>
             </div>
@@ -170,7 +178,7 @@ export default function Users() {
               </div>
               <div className="text-left">
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {mockUsers.filter(u => u.role === 'super_admin' || u.role === 'owner').length}
+                  {Array.isArray(users) ? users.filter(u => u.role === 'super_admin' || u.role === 'owner').length : 0}
                 </p>
               </div>
             </div>
@@ -186,7 +194,7 @@ export default function Users() {
               </div>
               <div className="text-left">
                 <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                  {mockUsers.filter(u => !u.isActive).length}
+                  {Array.isArray(users) ? users.filter(u => !u.isActive).length : 0}
                 </p>
               </div>
             </div>
@@ -274,6 +282,14 @@ export default function Users() {
                           >
                             {user.isActive ? "إلغاء التفعيل" : "تفعيل"}
                           </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteUser(user.id)}
+                            data-testid={`button-delete-user-${user.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -284,6 +300,14 @@ export default function Users() {
           )}
         </CardContent>
       </Card>
+
+      {/* User Form Modal */}
+      <UserForm
+        isOpen={showUserForm}
+        onClose={handleFormClose}
+        user={editingUser}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 }

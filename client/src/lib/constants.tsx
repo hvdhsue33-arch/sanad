@@ -1,6 +1,6 @@
 export const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://sanad22.netlify.app/api' 
-  : 'http://localhost:3000/api';
+  ? 'https://sanad22.netlify.app' 
+  : 'http://localhost:3000';
 
 export const APP_NAME = "نظام إبراهيم للمحاسبة";
 export const APP_VERSION = "1.0.0";
@@ -8,22 +8,22 @@ export const APP_VERSION = "1.0.0";
 // API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/auth/login',
-    LOGOUT: '/auth/logout',
-    USER: '/auth/user',
+    LOGIN: '/api/auth/login',
+    LOGOUT: '/api/auth/logout',
+    USER: '/api/auth/user',
   },
   DASHBOARD: {
-    STATS: '/dashboard/stats',
-    RECENT_TRANSACTIONS: '/dashboard/recent-transactions',
-    CURRENCY_DISTRIBUTION: '/dashboard/currency-distribution',
-    MONTHLY_REVENUE: '/dashboard/monthly-revenue',
+    STATS: '/api/dashboard/stats',
+    RECENT_TRANSACTIONS: '/api/dashboard/recent-transactions',
+    CURRENCY_DISTRIBUTION: '/api/dashboard/currency-distribution',
+    MONTHLY_REVENUE: '/api/dashboard/monthly-revenue',
   },
-  REVENUES: '/revenues',
-  EXPENSES: '/expenses',
-  PRODUCTS: '/products',
-  NOTIFICATIONS: '/notifications',
-  USERS: '/users',
-  TENANTS: '/tenants',
+  REVENUES: '/api/revenues',
+  EXPENSES: '/api/expenses',
+  PRODUCTS: '/api/products',
+  NOTIFICATIONS: '/api/notifications',
+  USERS: '/api/users',
+  TENANTS: '/api/tenants',
 } as const;
 
 // User Roles

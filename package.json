@@ -12,13 +12,20 @@
     "preview": "vite preview",
     "check": "tsc",
     "seed": "tsx scripts/seed-data.ts",
+    "reset": "tsx scripts/reset-data.ts",
     "mobile:add": "npx cap add android",
     "mobile:build": "npm run build:client && npx cap sync",
     "mobile:open": "npx cap open android",
     "mobile:run": "npx cap run android",
-    "mobile:build-apk": "npm run mobile:build && cd android && ./gradlew assembleDebug"
+    "mobile:build-apk": "npm run mobile:build && cd android && ./gradlew assembleDebug",
+    "mobile:build-auto": "node scripts/build-mobile.js"
   },
   "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@radix-ui/react-accordion": "^1.2.4",

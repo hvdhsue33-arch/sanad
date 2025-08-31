@@ -240,7 +240,6 @@ const NotificationSchema = new Schema<INotification>({
 });
 
 // Indexes
-UserSchema.index({ username: 1 });
 UserSchema.index({ tenantId: 1 });
 TenantSchema.index({ subscriptionExpiresAt: 1 });
 ProductSchema.index({ tenantId: 1 });

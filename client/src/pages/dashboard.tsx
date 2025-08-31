@@ -9,23 +9,28 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/dashboard/stats"],
+    queryKey: ["dashboard", "stats"],
+    queryFn: () => apiClient.get("/api/dashboard/stats"),
   });
 
   const { data: recentTransactions, isLoading: transactionsLoading } = useQuery({
-    queryKey: ["/api/dashboard/recent-transactions"],
+    queryKey: ["dashboard", "recent-transactions"],
+    queryFn: () => apiClient.get("/api/dashboard/recent-transactions"),
   });
 
   const { data: currencyData, isLoading: currencyLoading } = useQuery({
-    queryKey: ["/api/dashboard/currency-distribution"],
+    queryKey: ["dashboard", "currency-distribution"],
+    queryFn: () => apiClient.get("/api/dashboard/currency-distribution"),
   });
 
   const { data: monthlyRevenue, isLoading: revenueLoading } = useQuery({
-    queryKey: ["/api/dashboard/monthly-revenue", { year: new Date().getFullYear() }],
+    queryKey: ["dashboard", "monthly-revenue", { year: new Date().getFullYear() }],
+    queryFn: () => apiClient.get("/api/dashboard/monthly-revenue"),
   });
 
   const { data: notifications, isLoading: notificationsLoading } = useQuery({
-    queryKey: ["/api/notifications"],
+    queryKey: ["notifications"],
+    queryFn: () => apiClient.get("/api/notifications"),
   });
 
   if (statsLoading) {

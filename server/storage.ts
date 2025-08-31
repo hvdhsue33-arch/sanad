@@ -45,6 +45,10 @@ export const storage = {
     return await User.findByIdAndUpdate(id, { isActive: false }, { new: true });
   },
 
+  async getUsers(tenantId: string) {
+    return await User.find({ tenantId, isActive: true }).select('-password');
+  },
+
   // Tenant operations
   async getTenant(id: string) {
     return await Tenant.findById(id);

@@ -106,8 +106,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.get("/api/auth/user", requireAuth, async (req: any, res) => {
+  app.get("/api/auth/user", async (req: any, res) => {
     try {
+      if (!req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       const user = await storage.getUser(req.session.user.id);
       const tenant = await storage.getTenant(req.session.user.tenantId);
       
@@ -118,6 +122,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           role: user?.role,
           firstName: user?.firstName,
           lastName: user?.lastName,
+          email: user?.email,
+          isActive: user?.isActive,
+          tenantId: user?.tenantId,
         },
         tenant: {
           id: tenant?.id,
@@ -428,6 +435,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Mark notification as read error:", error);
       res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  // User routes
+  app.get("/api/users", requireAuth, async (req: any, res) => {
+    try {
+      const users = await storage.getUsers(req.session.user.tenantId);
+      res.json(users);
+    } catch (error) {
+      console.error("Get users error:", error);
+      res.status(500).json({ message: "Failed to get users" });
+    }
+  });
+
+  app.post("/api/users",
+    requireAuth,
+    requirePermission(['super_admin', 'owner']),
+    async (req: any, res) => {
+    try {
+      const validatedData = insertUserSchema.parse({
+        ...req.body,
+        tenantId: req.session.user.tenantId,
+      });
+
+      const user = await storage.createUser(validatedData);
+      res.status(201).json(user);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Create user error:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.put("/api/users/:id",
+    requireAuth,
+    requirePermission(['super_admin', 'owner']),
+    async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertUserSchema.partial().parse(req.body);
+      
+      const user = await storage.updateUser(id, validatedData);
+      res.json(user);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/users/:id",
+    requireAuth,
+    requirePermission(['super_admin', 'owner']),
+    async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteUser(id, req.session.user.tenantId);
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ message: "Failed to delete user" });
     }
   });
 

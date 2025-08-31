@@ -19,7 +19,8 @@ export default function Revenues() {
   const queryClient = useQueryClient();
 
   const { data: revenues, isLoading } = useQuery({
-    queryKey: ["/api/revenues"],
+    queryKey: ["revenues"],
+    queryFn: () => apiClient.get("/api/revenues"),
   });
 
   const deleteMutation = useMutation({
@@ -27,8 +28,8 @@ export default function Revenues() {
       await apiClient.delete(`/api/revenues/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/revenues"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["revenues"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "stats"] });
       toast({
         title: "تم الحذف بنجاح",
         description: "تم حذف الإيراد بنجاح",

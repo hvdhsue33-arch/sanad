@@ -145,7 +145,7 @@ export default function Login() {
                         exit={{ opacity: 0, height: 0 }}
                         className="text-red-600 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-lg"
                       >
-                        {error}
+                        {typeof error === 'string' ? error : 'حدث خطأ غير متوقع'}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -188,22 +188,7 @@ export default function Login() {
                   </motion.div>
                 </form>
 
-                {/* Demo Credentials */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.6, delay: 0.8 }}
-                  className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
-                >
-                  <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                    بيانات تجريبية:
-                  </h4>
-                  <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                    <p><strong>Admin:</strong> admin / Admin123!</p>
-                    <p><strong>Owner:</strong> owner / Owner123!</p>
-                    <p><strong>Manager:</strong> manager / Manager123!</p>
-                  </div>
-                </motion.div>
+
               </CardContent>
             </Card>
           </motion.div>

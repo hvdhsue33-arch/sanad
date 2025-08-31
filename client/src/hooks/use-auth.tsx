@@ -38,15 +38,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const response = await apiClient.get(API_ENDPOINTS.AUTH.USER);
         return response.user;
       } catch (error) {
-        // If 401, user is not authenticated
+        // If 401, user is not authenticated - this is expected
         if (error instanceof Error && error.message.includes('401')) {
           return null;
         }
-        throw error;
+        // For other errors, return null but don't throw
+        console.error('Auth check error:', error);
+        return null;
       }
     },
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   // Login mutation
@@ -60,7 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
     },
     onError: (error: any) => {
-      setError(error.message || 'فشل في تسجيل الدخول');
+      const errorMessage = error?.message || 'فشل في تسجيل الدخول';
+      setError(typeof errorMessage === 'string' ? errorMessage : 'فشل في تسجيل الدخول');
     },
   });
 
@@ -97,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user,
     login,
     logout,
-    error: error || (authError as string) || null,
+    error: error || (authError instanceof Error ? authError.message : (typeof authError === 'string' ? authError : null)) || null,
   };
 
   return (

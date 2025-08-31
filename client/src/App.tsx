@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { Capacitor } from '@capacitor/core';
 
 // Pages
 import Login from "@/pages/login";
@@ -16,10 +17,12 @@ import Warehouse from "@/pages/warehouse";
 import Reports from "@/pages/reports";
 import Users from "@/pages/users";
 import Settings from "@/pages/settings";
+import Backup from "@/pages/backup";
 import NotFound from "@/pages/not-found";
 
 // Layout
 import Layout from "@/components/layout/layout";
+import MobileLayout from "@/components/layout/mobile-layout";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -43,9 +46,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
+  // Check if running on mobile
+  const isMobile = Capacitor.isNativePlatform();
+  const LayoutComponent = isMobile ? MobileLayout : Layout;
+
   return (
     <ProtectedRoute>
-      <Layout>
+      <LayoutComponent>
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/revenues" component={Revenues} />
@@ -55,9 +62,10 @@ function Router() {
           <Route path="/reports" component={Reports} />
           <Route path="/users" component={Users} />
           <Route path="/settings" component={Settings} />
+          <Route path="/backup" component={Backup} />
           <Route component={NotFound} />
         </Switch>
-      </Layout>
+      </LayoutComponent>
     </ProtectedRoute>
   );
 }
