@@ -41,7 +41,11 @@ const requireAuth = (req: any, res: any, next: any) => {
 const requirePermission = (permissions: string[]) => {
   return (req: any, res: any, next: any) => {
     const userRole = req.session?.user?.role;
-    if (!userRole || !permissions.includes(userRole)) {
+    if (!userRole) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    if (!permissions.includes(userRole)) {
+      console.warn(`Access denied: User ${req.session.user.username} (${userRole}) attempted to access restricted resource`);
       return res.status(403).json({ message: "Insufficient permissions" });
     }
     next();

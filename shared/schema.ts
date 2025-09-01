@@ -296,7 +296,9 @@ export const insertRevenueSchema = z.object({
   productService: z.string().min(1).max(100),
   quantity: z.number().min(1).default(1),
   unitPrice: z.number().positive(),
-  totalAmount: z.number().positive(),
+  totalAmount: z.number().positive().refine((val) => val <= 999999999, {
+    message: "Amount exceeds maximum limit"
+  }),
   currency: z.enum(Object.values(Currency) as [string, ...string[]]),
   paymentMethod: z.enum(Object.values(PaymentMethod) as [string, ...string[]]),
   notes: z.string().optional(),
