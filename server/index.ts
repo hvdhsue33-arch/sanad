@@ -6,21 +6,7 @@ import cors from 'cors';
 
 const app = express();
 app.use(cors({
-  origin: function(origin, callback) {
-    const allowedOrigins = [
-      'https://ibrahem997.netlify.app',
-      'https://sanad22.netlify.app',
-      'https://sanaad.netlify.app',
-      'https://saasaas2.netlify.app',
-      'http://localhost:3000',
-      'http://127.0.0.1:3000'
-    ];
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS not allowed'));
-    }
-  },
+  origin: ['https://ibrahem997.netlify.app', 'https://sanad22.netlify.app', 'https://saasaas2.netlify.app', 'http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With'],
