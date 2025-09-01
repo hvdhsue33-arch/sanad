@@ -1,9 +1,9 @@
 [build]
-  command = "npm install && npm run build:client"
+  command = "npm install --production=false && npm run build:client"
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "18.20.8"
   NODE_ENV = "production"
 
 [[redirects]]
