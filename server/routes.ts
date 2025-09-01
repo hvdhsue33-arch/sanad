@@ -18,12 +18,14 @@ const sessionConfig = session({
   secret: process.env.SESSION_SECRET || 'accounting-system-secret',
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // true in production
+    secure: true,
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'none', // required for cross-origin
-    domain: process.env.NODE_ENV === 'production' ? '.netlify.app' : undefined // allow cookies across subdomains
+    sameSite: 'none',
+    domain: '.netlify.app',
+    path: '/'
   },
 });
 

@@ -6,10 +6,12 @@ import cors from 'cors';
 
 const app = express();
 app.use(cors({
-  origin: ['https://ibrahem997.netlify.app', 'https://saasaas2.netlify.app', 'http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: ['https://ibrahem997.netlify.app', 'https://sanad22.netlify.app', 'https://saasaas2.netlify.app', 'http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 200
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
