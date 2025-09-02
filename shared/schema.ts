@@ -1,17 +1,144 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { createClient } from '@libsql/client';
 import { z } from "zod";
+// @ts-ignore
+import dbConfig from '../database.config.js';
 
-// MongoDB Connection
+// Turso SQLite Connection
+export const client = createClient({
+  url: dbConfig.url,
+  authToken: dbConfig.authToken
+});
+
+// Local SQLite for development
+export const localClient = createClient({
+  url: `file:${dbConfig.localFile}`
+});
+
+// Connect to Turso
 export const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://sehx0190_db_user:Sanad$sa19971997@cluster0.yselhek.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-    await mongoose.connect(mongoURI);
-    console.log('MongoDB connected successfully');
+    // Test connection
+    await client.execute('SELECT 1');
+    console.log('Turso SQLite connected successfully');
+    
+    // Create tables if they don't exist
+    await createTables();
   } catch (error) {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
+    console.error('Turso connection error:', error);
+    console.log('Falling back to local SQLite...');
+    
+    try {
+      await localClient.execute('SELECT 1');
+      console.log('Local SQLite connected successfully');
+      await createTables();
+    } catch (localError) {
+      console.error('Local SQLite connection error:', localError);
+      process.exit(1);
+    }
   }
 };
+
+// Create database tables
+async function createTables() {
+  const tables = [
+    // Users table
+    `CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE,
+      password TEXT NOT NULL,
+      firstName TEXT,
+      lastName TEXT,
+      role TEXT NOT NULL DEFAULT 'viewer',
+      isActive INTEGER NOT NULL DEFAULT 1,
+      tenantId TEXT NOT NULL,
+      profileImageUrl TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    
+    // Tenants table
+    `CREATE TABLE IF NOT EXISTS tenants (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      subscriptionExpiresAt DATETIME NOT NULL,
+      isActive INTEGER NOT NULL DEFAULT 1,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    
+    // Products table
+    `CREATE TABLE IF NOT EXISTS products (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      category TEXT,
+      unit TEXT NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 0,
+      purchasePrice REAL NOT NULL,
+      salePrice REAL NOT NULL,
+      supplier TEXT,
+      minStockLevel INTEGER NOT NULL DEFAULT 0,
+      tenantId TEXT NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    
+    // Revenues table
+    `CREATE TABLE IF NOT EXISTS revenues (
+      id TEXT PRIMARY KEY,
+      operationNumber TEXT NOT NULL,
+      customerName TEXT,
+      transactionType TEXT NOT NULL,
+      productService TEXT NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 1,
+      unitPrice REAL NOT NULL,
+      totalAmount REAL NOT NULL,
+      currency TEXT NOT NULL,
+      paymentMethod TEXT NOT NULL,
+      notes TEXT,
+      tenantId TEXT NOT NULL,
+      createdBy TEXT NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    
+    // Expenses table
+    `CREATE TABLE IF NOT EXISTS expenses (
+      id TEXT PRIMARY KEY,
+      operationNumber TEXT NOT NULL,
+      supplierName TEXT,
+      expenseType TEXT NOT NULL,
+      description TEXT NOT NULL,
+      amount REAL NOT NULL,
+      currency TEXT NOT NULL,
+      paymentMethod TEXT NOT NULL,
+      notes TEXT,
+      tenantId TEXT NOT NULL,
+      createdBy TEXT NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    
+    // Notifications table
+    `CREATE TABLE IF NOT EXISTS notifications (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      type TEXT NOT NULL,
+      isRead INTEGER NOT NULL DEFAULT 0,
+      tenantId TEXT NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`
+  ];
+
+  for (const table of tables) {
+    try {
+      await client.execute(table);
+    } catch (error) {
+      console.log('Table might already exist:', error);
+    }
+  }
+}
 
 // Enums
 export const UserRole = {
@@ -54,7 +181,8 @@ export const ExpenseType = {
 } as const;
 
 // Interfaces
-export interface IUser extends Document {
+export interface IUser {
+  id?: string;
   username: string;
   email?: string;
   password: string;
@@ -64,19 +192,21 @@ export interface IUser extends Document {
   isActive: boolean;
   tenantId: string;
   profileImageUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface ITenant extends Document {
+export interface ITenant {
+  id?: string;
   name: string;
   subscriptionExpiresAt: Date;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface IProduct extends Document {
+export interface IProduct {
+  id?: string;
   name: string;
   category?: string;
   unit: string;
@@ -86,11 +216,12 @@ export interface IProduct extends Document {
   supplier?: string;
   minStockLevel: number;
   tenantId: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface IRevenue extends Document {
+export interface IRevenue {
+  id?: string;
   operationNumber: string;
   customerName?: string;
   transactionType: keyof typeof TransactionType;
@@ -103,11 +234,12 @@ export interface IRevenue extends Document {
   notes?: string;
   tenantId: string;
   createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface IExpense extends Document {
+export interface IExpense {
+  id?: string;
   operationNumber: string;
   supplierName?: string;
   expenseType: keyof typeof ExpenseType;
@@ -118,146 +250,19 @@ export interface IExpense extends Document {
   notes?: string;
   tenantId: string;
   createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface INotification extends Document {
+export interface INotification {
+  id?: string;
   title: string;
   message: string;
   type: string; // low_stock, subscription_expiry, high_spending, backup_success
   isRead: boolean;
   tenantId: string;
-  createdAt: Date;
+  createdAt?: Date;
 }
-
-// Schemas
-const UserSchema = new Schema<IUser>({
-  username: { type: String, required: true, unique: true, maxlength: 50 },
-  email: { type: String, unique: true, sparse: true },
-  password: { type: String, required: true },
-  firstName: { type: String, maxlength: 50 },
-  lastName: { type: String, maxlength: 50 },
-  role: { 
-    type: String, 
-    required: true, 
-    enum: Object.values(UserRole),
-    default: UserRole.VIEWER 
-  },
-  isActive: { type: Boolean, required: true, default: true },
-  tenantId: { type: String, required: true },
-  profileImageUrl: String,
-}, {
-  timestamps: true
-});
-
-const TenantSchema = new Schema<ITenant>({
-  name: { type: String, required: true, maxlength: 100 },
-  subscriptionExpiresAt: { type: Date, required: true },
-  isActive: { type: Boolean, required: true, default: true },
-}, {
-  timestamps: true
-});
-
-const ProductSchema = new Schema<IProduct>({
-  name: { type: String, required: true, maxlength: 100 },
-  category: { type: String, maxlength: 50 },
-  unit: { type: String, required: true, maxlength: 20 },
-  quantity: { type: Number, required: true, default: 0 },
-  purchasePrice: { type: Number, required: true },
-  salePrice: { type: Number, required: true },
-  supplier: { type: String, maxlength: 100 },
-  minStockLevel: { type: Number, required: true, default: 0 },
-  tenantId: { type: String, required: true },
-}, {
-  timestamps: true
-});
-
-const RevenueSchema = new Schema<IRevenue>({
-  operationNumber: { type: String, required: true, maxlength: 20 },
-  customerName: { type: String, maxlength: 100 },
-  transactionType: { 
-    type: String, 
-    required: true, 
-    enum: Object.values(TransactionType) 
-  },
-  productService: { type: String, required: true, maxlength: 100 },
-  quantity: { type: Number, required: true, default: 1 },
-  unitPrice: { type: Number, required: true },
-  totalAmount: { type: Number, required: true },
-  currency: { 
-    type: String, 
-    required: true, 
-    enum: Object.values(Currency) 
-  },
-  paymentMethod: { 
-    type: String, 
-    required: true, 
-    enum: Object.values(PaymentMethod) 
-  },
-  notes: String,
-  tenantId: { type: String, required: true },
-  createdBy: { type: String, required: true },
-}, {
-  timestamps: true
-});
-
-const ExpenseSchema = new Schema<IExpense>({
-  operationNumber: { type: String, required: true, maxlength: 20 },
-  supplierName: { type: String, maxlength: 100 },
-  expenseType: { 
-    type: String, 
-    required: true, 
-    enum: Object.values(ExpenseType) 
-  },
-  description: { type: String, required: true, maxlength: 200 },
-  amount: { type: Number, required: true },
-  currency: { 
-    type: String, 
-    required: true, 
-    enum: Object.values(Currency) 
-  },
-  paymentMethod: { 
-    type: String, 
-    required: true, 
-    enum: Object.values(PaymentMethod) 
-  },
-  notes: String,
-  tenantId: { type: String, required: true },
-  createdBy: { type: String, required: true },
-}, {
-  timestamps: true
-});
-
-const NotificationSchema = new Schema<INotification>({
-  title: { type: String, required: true, maxlength: 100 },
-  message: { type: String, required: true },
-  type: { type: String, required: true, maxlength: 20 },
-  isRead: { type: Boolean, required: true, default: false },
-  tenantId: { type: String, required: true },
-}, {
-  timestamps: { createdAt: true, updatedAt: false }
-});
-
-// Indexes
-UserSchema.index({ tenantId: 1 });
-TenantSchema.index({ subscriptionExpiresAt: 1 });
-ProductSchema.index({ tenantId: 1 });
-ProductSchema.index({ quantity: 1 });
-RevenueSchema.index({ tenantId: 1 });
-RevenueSchema.index({ createdAt: -1 });
-ExpenseSchema.index({ tenantId: 1 });
-ExpenseSchema.index({ createdAt: -1 });
-NotificationSchema.index({ tenantId: 1 });
-NotificationSchema.index({ isRead: 1 });
-
-// Models
-export const User = mongoose.model<IUser>('User', UserSchema);
-export const Tenant = mongoose.model<ITenant>('Tenant', TenantSchema);
-export const Product = mongoose.model<IProduct>('Product', ProductSchema);
-export const Revenue = mongoose.model<IRevenue>('Revenue', RevenueSchema);
-export const Expense = mongoose.model<IExpense>('Expense', ExpenseSchema);
-export const Notification = mongoose.model<INotification>('Notification', NotificationSchema);
 
 // Zod Schemas for validation
 export const insertUserSchema = z.object({
