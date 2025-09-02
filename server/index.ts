@@ -2,17 +2,23 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db";
+import { getCorsOrigin, corsMiddleware } from "./cors-utils";
 import cors from 'cors';
 
 const app = express();
+
+// Dynamic CORS configuration
 app.use(cors({
-  origin: ['https://ibrahem997.netlify.app', 'https://sanad22.netlify.app', 'https://saasaas2.netlify.app', 'http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: getCorsOrigin(),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With'],
   exposedHeaders: ['Set-Cookie'],
   optionsSuccessStatus: 200
 }));
+
+// Additional CORS middleware for manual header setting
+app.use(corsMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

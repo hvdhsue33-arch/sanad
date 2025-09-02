@@ -9,14 +9,23 @@ const client = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN || ''
 });
 
-// CORS headers (allow setting frontend origin via FRONTEND_URL env)
-const FRONTEND_ORIGIN = process.env.FRONTEND_URL || '*';
-const corsHeaders = {
-  'Access-Control-Allow-Origin': FRONTEND_ORIGIN,
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Credentials': 'true'
-};
+// Dynamic CORS headers (allow setting frontend origin via FRONTEND_URL env)
+function getCorsHeaders() {
+  const frontendUrl = process.env.FRONTEND_URL;
+  const origin = frontendUrl || '*';
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Content-Length, X-Requested-With',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Expose-Headers': 'Set-Cookie',
+  };
+}
+
+// Helper to always return CORS headers in every response
+function withCors(res) {
+  return { ...res, headers: { ...getCorsHeaders(), ...(res.headers || {}) } };
+}
 
 // Generate operation number
 const generateOperationNumber = (prefix: string) => {
@@ -28,64 +37,53 @@ const generateOperationNumber = (prefix: string) => {
 export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
-    return {
+    return withCors({
       statusCode: 200,
-      headers: corsHeaders,
       body: ''
-    };
+    });
   }
 
   const { path, httpMethod, body } = event;
   const pathSegments = path.replace('/.netlify/functions/api', '').split('/').filter(Boolean);
 
   try {
+    // Use withCors for all responses
     // Auth routes
     if (pathSegments[0] === 'auth') {
       if (pathSegments[1] === 'login' && httpMethod === 'POST') {
         const { username, password } = JSON.parse(body || '{}');
-        
         if (!username || !password) {
-          return {
+          return withCors({
             statusCode: 400,
-            headers: corsHeaders,
             body: JSON.stringify({ message: "Username and password required" })
-          };
+          });
         }
-
         const result = await client.execute({
           sql: 'SELECT * FROM users WHERE username = ? AND isActive = 1',
           args: [username]
         });
-
         const user = result.rows[0];
         if (!user) {
-          return {
+          return withCors({
             statusCode: 401,
-            headers: corsHeaders,
             body: JSON.stringify({ message: "Invalid credentials" })
-          };
+          });
         }
-
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
-          return {
+          return withCors({
             statusCode: 401,
-            headers: corsHeaders,
             body: JSON.stringify({ message: "Invalid credentials" })
-          };
+          });
         }
-
         // Get tenant info
         const tenantResult = await client.execute({
           sql: 'SELECT * FROM tenants WHERE id = ?',
           args: [user.tenantId]
         });
-
         const tenant = tenantResult.rows[0];
-
-        return {
+        return withCors({
           statusCode: 200,
-          headers: corsHeaders,
           body: JSON.stringify({
             user: {
               id: user.id,
@@ -101,19 +99,16 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
               subscriptionExpiresAt: tenant.subscriptionExpiresAt,
             }
           })
-        };
+        });
       }
-
       if (pathSegments[1] === 'user' && httpMethod === 'GET') {
         // Get user from session/token (simplified for demo)
-        return {
+        return withCors({
           statusCode: 401,
-          headers: corsHeaders,
           body: JSON.stringify({ message: "Authentication required" })
-        };
+        });
       }
     }
-
     // Users routes
     if (pathSegments[0] === 'users') {
       if (httpMethod === 'GET') {
@@ -121,20 +116,16 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
           sql: 'SELECT id, username, email, firstName, lastName, role, isActive, tenantId, profileImageUrl, createdAt, updatedAt FROM users WHERE isActive = 1',
           args: []
         });
-
-        return {
+        return withCors({
           statusCode: 200,
-          headers: corsHeaders,
           body: JSON.stringify(result.rows)
-        };
+        });
       }
-
       if (httpMethod === 'POST') {
         const userData = JSON.parse(body || '{}');
         const id = randomUUID();
         const now = new Date().toISOString();
         const hashedPassword = await bcrypt.hash(userData.password, 10);
-
         await client.execute({
           sql: `INSERT INTO users (id, username, email, password, firstName, lastName, role, isActive, tenantId, createdAt, updatedAt) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -144,15 +135,12 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             userData.isActive ? 1 : 0, userData.tenantId, now, now
           ]
         });
-
-        return {
+        return withCors({
           statusCode: 201,
-          headers: corsHeaders,
           body: JSON.stringify({ id, ...userData, createdAt: now, updatedAt: now })
-        };
+        });
       }
     }
-
     // Products routes
     if (pathSegments[0] === 'products') {
       if (httpMethod === 'GET') {
@@ -160,19 +148,15 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
           sql: 'SELECT * FROM products ORDER BY createdAt DESC',
           args: []
         });
-
-        return {
+        return withCors({
           statusCode: 200,
-          headers: corsHeaders,
           body: JSON.stringify(result.rows)
-        };
+        });
       }
-
       if (httpMethod === 'POST') {
         const productData = JSON.parse(body || '{}');
         const id = randomUUID();
         const now = new Date().toISOString();
-
         await client.execute({
           sql: `INSERT INTO products (id, name, category, unit, quantity, purchasePrice, salePrice, supplier, minStockLevel, tenantId, createdAt, updatedAt) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -183,15 +167,12 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             now, now
           ]
         });
-
-        return {
+        return withCors({
           statusCode: 201,
-          headers: corsHeaders,
           body: JSON.stringify({ id, ...productData, createdAt: now, updatedAt: now })
-        };
+        });
       }
     }
-
     // Revenues routes
     if (pathSegments[0] === 'revenues') {
       if (httpMethod === 'GET') {
@@ -199,20 +180,16 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
           sql: 'SELECT * FROM revenues ORDER BY createdAt DESC LIMIT 50',
           args: []
         });
-
-        return {
+        return withCors({
           statusCode: 200,
-          headers: corsHeaders,
           body: JSON.stringify(result.rows)
-        };
+        });
       }
-
       if (httpMethod === 'POST') {
         const revenueData = JSON.parse(body || '{}');
         const id = randomUUID();
         const operationNumber = generateOperationNumber('REV');
         const now = new Date().toISOString();
-
         await client.execute({
           sql: `INSERT INTO revenues (id, operationNumber, customerName, transactionType, productService, quantity, unitPrice, totalAmount, currency, paymentMethod, notes, tenantId, createdBy, createdAt, updatedAt) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -223,15 +200,12 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             revenueData.notes, revenueData.tenantId, revenueData.createdBy, now, now
           ]
         });
-
-        return {
+        return withCors({
           statusCode: 201,
-          headers: corsHeaders,
           body: JSON.stringify({ id, operationNumber, ...revenueData, createdAt: now, updatedAt: now })
-        };
+        });
       }
     }
-
     // Expenses routes
     if (pathSegments[0] === 'expenses') {
       if (httpMethod === 'GET') {
@@ -239,20 +213,16 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
           sql: 'SELECT * FROM expenses ORDER BY createdAt DESC LIMIT 50',
           args: []
         });
-
-        return {
+        return withCors({
           statusCode: 200,
-          headers: corsHeaders,
           body: JSON.stringify(result.rows)
-        };
+        });
       }
-
       if (httpMethod === 'POST') {
         const expenseData = JSON.parse(body || '{}');
         const id = randomUUID();
         const operationNumber = generateOperationNumber('EXP');
         const now = new Date().toISOString();
-
         await client.execute({
           sql: `INSERT INTO expenses (id, operationNumber, supplierName, expenseType, description, amount, currency, paymentMethod, notes, tenantId, createdBy, createdAt, updatedAt) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -263,21 +233,17 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             expenseData.createdBy, now, now
           ]
         });
-
-        return {
+        return withCors({
           statusCode: 201,
-          headers: corsHeaders,
           body: JSON.stringify({ id, operationNumber, ...expenseData, createdAt: now, updatedAt: now })
-        };
+        });
       }
     }
-
     // Dashboard stats
     if (pathSegments[0] === 'dashboard' && pathSegments[1] === 'stats') {
       const today = new Date();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
       const [revenueResult, expenseResult, lowStockResult, notificationsResult] = await Promise.all([
         client.execute({
           sql: 'SELECT * FROM revenues WHERE createdAt BETWEEN ? AND ?',
@@ -296,37 +262,30 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
           args: []
         })
       ]);
-
       const monthlyRevenue = revenueResult.rows.reduce((sum: number, rev: any) => sum + rev.totalAmount, 0);
       const monthlyExpenses = expenseResult.rows.reduce((sum: number, exp: any) => sum + exp.amount, 0);
       const lowStockProducts = lowStockResult.rows.length;
       const unreadNotifications = notificationsResult.rows[0].count;
-
-      return {
+      return withCors({
         statusCode: 200,
-        headers: corsHeaders,
         body: JSON.stringify({
           monthlyRevenue,
           monthlyExpenses,
           lowStockProducts,
           unreadNotifications
         })
-      };
+      });
     }
-
     // Default response
-    return {
+    return withCors({
       statusCode: 404,
-      headers: corsHeaders,
       body: JSON.stringify({ message: "Endpoint not found" })
-    };
-
+    });
   } catch (error) {
     console.error('API Error:', error);
-    return {
+    return withCors({
       statusCode: 500,
-      headers: corsHeaders,
       body: JSON.stringify({ message: "Internal server error", error: error.message })
-    };
+    });
   }
 };

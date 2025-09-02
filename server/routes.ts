@@ -11,7 +11,17 @@ import {
 import bcrypt from "bcrypt";
 import session from "express-session";
 import { z } from "zod";
+import { getCorsHeaders } from "./cors-utils";
 import "./types"; // Import session type augmentation
+
+// Helper function to send JSON response with CORS headers
+const sendJsonResponse = (res: any, statusCode: number, data: any) => {
+  const corsHeaders = getCorsHeaders();
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
+  res.status(statusCode).json(data);
+};
 
 // Session configuration
 const sessionConfig = session({
@@ -31,7 +41,7 @@ const sessionConfig = session({
 // Authentication middleware
 const requireAuth = (req: any, res: any, next: any) => {
   if (!req.session?.user) {
-    return res.status(401).json({ message: "Authentication required" });
+    return sendJsonResponse(res, 401, { message: "Authentication required" });
   }
   next();
 };
@@ -41,11 +51,11 @@ const requirePermission = (permissions: string[]) => {
   return (req: any, res: any, next: any) => {
     const userRole = req.session?.user?.role;
     if (!userRole) {
-      return res.status(401).json({ message: "Authentication required" });
+      return sendJsonResponse(res, 401, { message: "Authentication required" });
     }
     if (!permissions.includes(userRole)) {
       console.warn(`Access denied: User ${req.session.user.username} (${userRole}) attempted to access restricted resource`);
-      return res.status(403).json({ message: "Insufficient permissions" });
+      return sendJsonResponse(res, 403, { message: "Insufficient permissions" });
     }
     next();
   };
@@ -60,23 +70,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { username, password } = req.body;
       
       if (!username || !password) {
-        return res.status(400).json({ message: "Username and password required" });
+        return sendJsonResponse(res, 400, { message: "Username and password required" });
       }
 
       const user = await storage.getUserByUsername(username);
       if (!user || !user.isActive) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        return sendJsonResponse(res, 401, { message: "Invalid credentials" });
       }
 
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        return sendJsonResponse(res, 401, { message: "Invalid credentials" });
       }
 
       // Check tenant subscription
       const tenant = await storage.getTenant(user.tenantId);
       if (!tenant || !tenant.isActive || tenant.subscriptionExpiresAt < new Date()) {
-        return res.status(403).json({ message: "Subscription expired or inactive" });
+        return sendJsonResponse(res, 403, { message: "Subscription expired or inactive" });
       }
 
       req.session.user = {
@@ -88,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: user.lastName || undefined,
       };
 
-      res.json({ 
+      sendJsonResponse(res, 200, { 
         user: req.session.user,
         tenant: {
           id: tenant.id,
@@ -98,29 +108,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Login error:", error);
-      res.status(500).json({ message: "Login failed" });
+      sendJsonResponse(res, 500, { message: "Login failed" });
     }
   });
 
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy((err) => {
       if (err) {
-        return res.status(500).json({ message: "Logout failed" });
+        return sendJsonResponse(res, 500, { message: "Logout failed" });
       }
-      res.json({ message: "Logged out successfully" });
+      sendJsonResponse(res, 200, { message: "Logged out successfully" });
     });
   });
 
   app.get("/api/auth/user", async (req: any, res) => {
     try {
       if (!req.session?.user) {
-        return res.status(401).json({ message: "Authentication required" });
+        return sendJsonResponse(res, 401, { message: "Authentication required" });
       }
 
       const user = await storage.getUser(req.session.user.id);
       const tenant = await storage.getTenant(req.session.user.tenantId);
       
-      res.json({
+      sendJsonResponse(res, 200, {
         user: {
           id: user?.id,
           username: user?.username,
@@ -139,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Get user error:", error);
-      res.status(500).json({ message: "Failed to get user" });
+      sendJsonResponse(res, 500, { message: "Failed to get user" });
     }
   });
 
@@ -149,10 +159,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stats = await storage.getDashboardStats(req.session.user.tenantId);
       const notifications = await storage.getUnreadNotificationCount(req.session.user.tenantId);
       
-      res.json({ ...stats, unreadNotifications: notifications });
+      sendJsonResponse(res, 200, { ...stats, unreadNotifications: notifications });
     } catch (error) {
       console.error("Dashboard stats error:", error);
-      res.status(500).json({ message: "Failed to get dashboard stats" });
+      sendJsonResponse(res, 500, { message: "Failed to get dashboard stats" });
     }
   });
 
