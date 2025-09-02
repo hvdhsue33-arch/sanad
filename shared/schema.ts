@@ -14,14 +14,19 @@ export const localClient = createClient({
   url: `file:${dbConfig.localFile}`
 });
 
+// Active client (will point to `client` or `localClient` after connectDB runs)
+export let activeClient: ReturnType<typeof createClient> = client;
+
 // Connect to Turso
 export const connectDB = async () => {
   try {
     // Test connection
     await client.execute('SELECT 1');
     console.log('Turso SQLite connected successfully');
-    
-    // Create tables if they don't exist
+    // mark active client
+    activeClient = client;
+
+    // Create tables if they don't exist using the active client
     await createTables();
   } catch (error) {
     console.error('Turso connection error:', error);
@@ -30,10 +35,13 @@ export const connectDB = async () => {
     try {
       await localClient.execute('SELECT 1');
       console.log('Local SQLite connected successfully');
+      // mark active client
+      activeClient = localClient;
+
       await createTables();
     } catch (localError) {
       console.error('Local SQLite connection error:', localError);
-      process.exit(1);
+    process.exit(1);
     }
   }
 };
@@ -133,7 +141,7 @@ async function createTables() {
 
   for (const table of tables) {
     try {
-      await client.execute(table);
+  await activeClient.execute(table);
     } catch (error) {
       console.log('Table might already exist:', error);
     }

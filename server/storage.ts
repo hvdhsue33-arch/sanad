@@ -1,6 +1,5 @@
 import { 
-  client,
-  localClient,
+  activeClient,
   type InsertUser,
   type InsertTenant,
   type InsertProduct,
@@ -19,14 +18,8 @@ const generateOperationNumber = (prefix: string) => {
   return `${prefix}${timestamp}${random}`;
 };
 
-// Helper function to get active client
-const getActiveClient = () => {
-  try {
-    return client;
-  } catch {
-    return localClient;
-  }
-};
+// Helper to return the active DB client (set by connectDB)
+const getActiveClient = () => activeClient;
 
 export const storage = {
   // User operations

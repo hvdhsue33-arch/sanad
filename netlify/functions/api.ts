@@ -3,15 +3,16 @@ import { createClient } from '@libsql/client';
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
-// Turso Database Configuration
+// Turso Database Configuration from environment (set these in Netlify UI)
 const client = createClient({
-  url: 'libsql://ibrahemaccounting-hvdhsue33-arch.aws-eu-west-1.turso.io',
-  authToken: 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NTY3NzUxNTMsImlkIjoiMGRhNWIyNGYtZjc5Yi00ZmZkLTlmNzEtZTZlMjkxYzAyOTJlIiwicmlkIjoiMTBhNjUxOTktMDYwMS00ZDEwLTk0OWMtNWMzM2JlN2ZlOWRiIn0.YjfLAPUKJhxjshc6S6tPfu9BB-5tKzSnnxx-W-gF8AtIc9hM0F5nCAw0IUhUHkIX-vuAeOWWYXURTJlQCp7WDg'
+  url: process.env.TURSO_URL || '',
+  authToken: process.env.TURSO_AUTH_TOKEN || ''
 });
 
-// CORS headers
+// CORS headers (allow setting frontend origin via FRONTEND_URL env)
+const FRONTEND_ORIGIN = process.env.FRONTEND_URL || '*';
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': FRONTEND_ORIGIN,
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Credentials': 'true'
