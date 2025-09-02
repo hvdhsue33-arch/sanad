@@ -9,16 +9,13 @@ const client = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN || ''
 });
 
-// Dynamic CORS headers (allow setting frontend origin via FRONTEND_URL env)
+// Open CORS headers - allows all origins
 function getCorsHeaders() {
-  const frontendUrl = process.env.FRONTEND_URL;
-  const origin = frontendUrl || '*';
   return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Content-Length, X-Requested-With',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Expose-Headers': 'Set-Cookie',
+    'Access-Control-Allow-Credentials': 'true'
   };
 }
 

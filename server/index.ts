@@ -2,18 +2,17 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db";
-import { getCorsOrigin, corsMiddleware } from "./cors-utils";
+import { corsMiddleware } from "./cors-utils";
 import cors from 'cors';
 
 const app = express();
 
-// Dynamic CORS configuration
+// Open CORS configuration - allows all origins
 app.use(cors({
-  origin: getCorsOrigin(),
+  origin: '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200
 }));
 

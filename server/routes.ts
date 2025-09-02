@@ -170,20 +170,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const transactions = await storage.getRecentTransactions(req.session.user.tenantId, limit);
-      res.json(transactions);
+      sendJsonResponse(res, 200,transactions);
     } catch (error) {
       console.error("Recent transactions error:", error);
-      res.status(500).json({ message: "Failed to get recent transactions" });
+      sendJsonResponse(res, 500, { message: "Failed to get recent transactions" });
     }
   });
 
   app.get("/api/dashboard/currency-distribution", requireAuth, async (req: any, res) => {
     try {
       const distribution = await storage.getCurrencyDistribution(req.session.user.tenantId);
-      res.json(distribution);
+      sendJsonResponse(res, 200,distribution);
     } catch (error) {
       console.error("Currency distribution error:", error);
-      res.status(500).json({ message: "Failed to get currency distribution" });
+      sendJsonResponse(res, 500, { message: "Failed to get currency distribution" });
     }
   });
 
@@ -191,10 +191,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const year = parseInt(req.query.year as string) || new Date().getFullYear();
       const monthlyData = await storage.getMonthlyRevenueData(req.session.user.tenantId, year);
-      res.json(monthlyData);
+      sendJsonResponse(res, 200,monthlyData);
     } catch (error) {
       console.error("Monthly revenue error:", error);
-      res.status(500).json({ message: "Failed to get monthly revenue" });
+      sendJsonResponse(res, 500, { message: "Failed to get monthly revenue" });
     }
   });
 
@@ -203,10 +203,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
       const revenues = await storage.getRevenues(req.session.user.tenantId, limit);
-      res.json(revenues);
+      sendJsonResponse(res, 200,revenues);
     } catch (error) {
       console.error("Get revenues error:", error);
-      res.status(500).json({ message: "Failed to get revenues" });
+      sendJsonResponse(res, 500, { message: "Failed to get revenues" });
     }
   });
 
@@ -222,13 +222,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const revenue = await storage.createRevenue(validatedData);
-      res.status(201).json(revenue);
+      sendJsonResponse(res, 201, revenue);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return sendJsonResponse(res, 400, { message: "Validation error", errors: error.errors });
       }
       console.error("Create revenue error:", error);
-      res.status(500).json({ message: "Failed to create revenue" });
+      sendJsonResponse(res, 500, { message: "Failed to create revenue" });
     }
   });
 
@@ -241,13 +241,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertRevenueSchema.partial().parse(req.body);
       
       const revenue = await storage.updateRevenue(id, validatedData);
-      res.json(revenue);
+      sendJsonResponse(res, 200,revenue);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return sendJsonResponse(res, 400, { message: "Validation error", errors: error.errors });
       }
       console.error("Update revenue error:", error);
-      res.status(500).json({ message: "Failed to update revenue" });
+      sendJsonResponse(res, 500, { message: "Failed to update revenue" });
     }
   });
 
@@ -258,10 +258,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       await storage.deleteRevenue(id, req.session.user.tenantId);
-      res.json({ message: "Revenue deleted successfully" });
+      sendJsonResponse(res, 200,{ message: "Revenue deleted successfully" });
     } catch (error) {
       console.error("Delete revenue error:", error);
-      res.status(500).json({ message: "Failed to delete revenue" });
+      sendJsonResponse(res, 500, { message: "Failed to delete revenue" });
     }
   });
 
@@ -270,10 +270,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
       const expenses = await storage.getExpenses(req.session.user.tenantId, limit);
-      res.json(expenses);
+      sendJsonResponse(res, 200,expenses);
     } catch (error) {
       console.error("Get expenses error:", error);
-      res.status(500).json({ message: "Failed to get expenses" });
+      sendJsonResponse(res, 500, { message: "Failed to get expenses" });
     }
   });
 
@@ -289,13 +289,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const expense = await storage.createExpense(validatedData);
-      res.status(201).json(expense);
+      sendJsonResponse(res, 201,expense);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return sendJsonResponse(res, 400, { message: "Validation error", errors: error.errors });
       }
       console.error("Create expense error:", error);
-      res.status(500).json({ message: "Failed to create expense" });
+      sendJsonResponse(res, 500, { message: "Failed to create expense" });
     }
   });
 
@@ -308,13 +308,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertExpenseSchema.partial().parse(req.body);
       
       const expense = await storage.updateExpense(id, validatedData);
-      res.json(expense);
+      sendJsonResponse(res, 200,expense);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return sendJsonResponse(res, 400, { message: "Validation error", errors: error.errors });
       }
       console.error("Update expense error:", error);
-      res.status(500).json({ message: "Failed to update expense" });
+      sendJsonResponse(res, 500, { message: "Failed to update expense" });
     }
   });
 
@@ -325,10 +325,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       await storage.deleteExpense(id, req.session.user.tenantId);
-      res.json({ message: "Expense deleted successfully" });
+      sendJsonResponse(res, 200,{ message: "Expense deleted successfully" });
     } catch (error) {
       console.error("Delete expense error:", error);
-      res.status(500).json({ message: "Failed to delete expense" });
+      sendJsonResponse(res, 500, { message: "Failed to delete expense" });
     }
   });
 
@@ -336,10 +336,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products", requireAuth, async (req: any, res) => {
     try {
       const products = await storage.getProducts(req.session.user.tenantId);
-      res.json(products);
+      sendJsonResponse(res, 200,products);
     } catch (error) {
       console.error("Get products error:", error);
-      res.status(500).json({ message: "Failed to get products" });
+      sendJsonResponse(res, 500, { message: "Failed to get products" });
     }
   });
 
@@ -354,13 +354,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const product = await storage.createProduct(validatedData);
-      res.status(201).json(product);
+      sendJsonResponse(res, 201,product);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return sendJsonResponse(res, 400, { message: "Validation error", errors: error.errors });
       }
       console.error("Create product error:", error);
-      res.status(500).json({ message: "Failed to create product" });
+      sendJsonResponse(res, 500, { message: "Failed to create product" });
     }
   });
 
@@ -373,13 +373,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertProductSchema.partial().parse(req.body);
       
       const product = await storage.updateProduct(id, validatedData);
-      res.json(product);
+      sendJsonResponse(res, 200,product);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return sendJsonResponse(res, 400, { message: "Validation error", errors: error.errors });
       }
       console.error("Update product error:", error);
-      res.status(500).json({ message: "Failed to update product" });
+      sendJsonResponse(res, 500, { message: "Failed to update product" });
     }
   });
 
@@ -390,20 +390,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       await storage.deleteProduct(id, req.session.user.tenantId);
-      res.json({ message: "Product deleted successfully" });
+      sendJsonResponse(res, 200,{ message: "Product deleted successfully" });
     } catch (error) {
       console.error("Delete product error:", error);
-      res.status(500).json({ message: "Failed to delete product" });
+      sendJsonResponse(res, 500, { message: "Failed to delete product" });
     }
   });
 
   app.get("/api/products/low-stock", requireAuth, async (req: any, res) => {
     try {
       const products = await storage.getLowStockProducts(req.session.user.tenantId);
-      res.json(products);
+      sendJsonResponse(res, 200,products);
     } catch (error) {
       console.error("Get low stock products error:", error);
-      res.status(500).json({ message: "Failed to get low stock products" });
+      sendJsonResponse(res, 500, { message: "Failed to get low stock products" });
     }
   });
 
@@ -412,10 +412,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       const notifications = await storage.getNotifications(req.session.user.tenantId, limit);
-      res.json(notifications);
+      sendJsonResponse(res, 200,notifications);
     } catch (error) {
       console.error("Get notifications error:", error);
-      res.status(500).json({ message: "Failed to get notifications" });
+      sendJsonResponse(res, 500, { message: "Failed to get notifications" });
     }
   });
 
@@ -430,13 +430,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const notification = await storage.createNotification(validatedData);
-      res.status(201).json(notification);
+      sendJsonResponse(res, 201,notification);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return sendJsonResponse(res, 400, { message: "Validation error", errors: error.errors });
       }
       console.error("Create notification error:", error);
-      res.status(500).json({ message: "Failed to create notification" });
+      sendJsonResponse(res, 500, { message: "Failed to create notification" });
     }
   });
 
@@ -446,10 +446,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       await storage.markNotificationAsRead(id, req.session.user.tenantId);
-      res.json({ message: "Notification marked as read" });
+      sendJsonResponse(res, 200,{ message: "Notification marked as read" });
     } catch (error) {
       console.error("Mark notification as read error:", error);
-      res.status(500).json({ message: "Failed to mark notification as read" });
+      sendJsonResponse(res, 500, { message: "Failed to mark notification as read" });
     }
   });
 
@@ -457,10 +457,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", requireAuth, async (req: any, res) => {
     try {
       const users = await storage.getUsers(req.session.user.tenantId);
-      res.json(users);
+      sendJsonResponse(res, 200,users);
     } catch (error) {
       console.error("Get users error:", error);
-      res.status(500).json({ message: "Failed to get users" });
+      sendJsonResponse(res, 500, { message: "Failed to get users" });
     }
   });
 
@@ -475,13 +475,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const user = await storage.createUser(validatedData);
-      res.status(201).json(user);
+      sendJsonResponse(res, 201,user);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return sendJsonResponse(res, 400, { message: "Validation error", errors: error.errors });
       }
       console.error("Create user error:", error);
-      res.status(500).json({ message: "Failed to create user" });
+      sendJsonResponse(res, 500, { message: "Failed to create user" });
     }
   });
 
@@ -494,13 +494,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertUserSchema.partial().parse(req.body);
       
       const user = await storage.updateUser(id, validatedData);
-      res.json(user);
+      sendJsonResponse(res, 200,user);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return sendJsonResponse(res, 400, { message: "Validation error", errors: error.errors });
       }
       console.error("Update user error:", error);
-      res.status(500).json({ message: "Failed to update user" });
+      sendJsonResponse(res, 500, { message: "Failed to update user" });
     }
   });
 
@@ -511,10 +511,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       await storage.deleteUser(id, req.session.user.tenantId);
-      res.json({ message: "User deleted successfully" });
+      sendJsonResponse(res, 200,{ message: "User deleted successfully" });
     } catch (error) {
       console.error("Delete user error:", error);
-      res.status(500).json({ message: "Failed to delete user" });
+      sendJsonResponse(res, 500, { message: "Failed to delete user" });
     }
   });
 
